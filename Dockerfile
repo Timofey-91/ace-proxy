@@ -1,19 +1,17 @@
-# Берём готовый образ AceStream
-FROM wafy80/acestream:latest
+FROM wafy80/acestream
 
-# Устанавливаем Python и pip
-RUN apt-get update && apt-get install -y python3 python3-pip curl && rm -rf /var/lib/apt/lists/*
+# Устанавливаем nginx
+RUN apt-get update && apt-get install -y nginx
 
-WORKDIR /app
+# Копируем конфиг nginx
+COPY nginx.conf /etc/nginx/nginx.conf
 
-# Устанавливаем зависимости Python
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Копируем скрипт запуска
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
-# Копируем код Flask
-COPY app.py .
+# Открываем порты
+EXPOSE 80
 
-# Пробрасываем порт Flask
-EXPOSE 5000
-
-CMD ["python3", "app.py"]
+# Запускаем
+CMD ["/start.sh"]
