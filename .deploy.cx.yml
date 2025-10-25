@@ -1,0 +1,8 @@
+name: acestream-proxy
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
