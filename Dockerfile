@@ -10,8 +10,8 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Открываем порты
+# Открываем порт
 EXPOSE 80
 
-# Запускаем
+# Запускаем скрипт
 CMD ["/start.sh"]
