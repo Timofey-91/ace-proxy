@@ -1,23 +1,24 @@
-FROM debian:bullseye-slim
+# syntax=docker/dockerfile:1
+FROM python:3.10-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
+# Устанавливаем нужные пакеты
+RUN apt-get update && apt-get install -y wget tar && apt-get clean
 
-RUN apt-get update && apt-get install -y \
-    wget curl python3 python3-flask python3-requests libssl1.1 libffi7 \
-    && rm -rf /var/lib/apt/lists/*
-
-# --- AceStream Engine (ValdikSS build) ---
+# --- Устанавливаем AceStream Engine (ValdikSS mirror) ---
 RUN mkdir -p /opt/acestream && \
     cd /opt/acestream && \
-    wget -q https://github.com/ValdikSS/acestream-linux/releases/download/3.1.74/acestream-engine_3.1.74_debian_11_amd64.tar.gz -O acestream.tar.gz && \
+    wget -q http://mirror.valdikss.org.ru/acestream/3.1.74/acestream-engine_3.1.74_debian_11_amd64.tar.gz -O acestream.tar.gz && \
     tar -xzf acestream.tar.gz && \
     rm acestream.tar.gz && \
     chmod +x /opt/acestream/start-engine
 
-# --- Flask proxy ---
+# --- Копируем Python-приложение ---
 WORKDIR /app
 COPY app.py /app/app.py
 
-EXPOSE 6878 10000
+# --- Открываем порт для API ---
+EXPOSE 8090
 
-CMD bash -c "/opt/acestream/start-engine --client-console & python3 /app/app.py"
+# --- Запуск AceStream и API ---
+CMD /opt/acestream/start-engine --client-console --bind-all & \
+    python3 /app/app.py
