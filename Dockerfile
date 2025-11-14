@@ -1,24 +1,35 @@
-# syntax=docker/dockerfile:1
-FROM python:3.10-slim
+FROM ubuntu:20.04
 
-# Устанавливаем нужные пакеты
-RUN apt-get update && apt-get install -y wget tar && apt-get clean
+ENV DEBIAN_FRONTEND=noninteractive
 
-# --- Устанавливаем AceStream Engine (ValdikSS mirror) ---
-RUN mkdir -p /opt/acestream && \
-    cd /opt/acestream && \
-    wget -q http://mirror.valdikss.org.ru/acestream/3.1.74/acestream-engine_3.1.74_debian_11_amd64.tar.gz -O acestream.tar.gz && \
-    tar -xzf acestream.tar.gz && \
-    rm acestream.tar.gz && \
-    chmod +x /opt/acestream/start-engine
+# Установка системных зависимостей
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    wget \
+    xz-utils \
+    libssl1.1 \
+    && rm -rf /var/lib/apt/lists/*
 
-# --- Копируем Python-приложение ---
-WORKDIR /app
-COPY app.py /app/app.py
+WORKDIR /opt/acestream
 
-# --- Открываем порт для API ---
-EXPOSE 8090
+# Скачать AceStream
+RUN wget -O acestream.tar.xz \
+    https://github.com/OpenAceStream/acestream-builds/releases/download/3.1.49/acestream-engine_3.1.49_ubuntu_20.04_x86_64.tar.xz
 
-# --- Запуск AceStream и API ---
-CMD /opt/acestream/start-engine --client-console --bind-all & \
-    python3 /app/app.py
+# Распаковать и очистить
+RUN tar -xf acestream.tar.xz && rm acestream.tar.xz
+RUN chmod +x ./acestreamengine
+
+# Установить Python зависимости
+COPY requirements.txt .
+RUN pip3 install -r requirements.txt
+
+# Скопировать Python скрипт
+COPY app.py .
+
+# Открыть порты
+EXPOSE 6878 8000
+
+# Запустить AceStream и веб-сервер
+CMD ["sh", "-c", "/opt/acestream/acestreamengine --client-console & python3 /opt/acestream/app.py"]
